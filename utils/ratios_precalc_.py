@@ -183,16 +183,3 @@ The user request:
         financial_context = ""
 
     return financial_context
-
-
-async def test():
-
-    user_id = "user"
-    query = "do you recommend investing in apple"
-
-    result = await precalculate_ratios(query, user_id)
-    print(result)
-
-
-if __name__ == "__main__":
-    asyncio.run(test())

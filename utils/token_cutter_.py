@@ -218,14 +218,16 @@ def token_cutter(messages, max_tokens=30000):
             ):
                 validated_output.append(m)
             else:
-                print(f"Removing assistant message with orphaned tool_use blocks")
+                pass
+                # print(f"Removing assistant message with orphaned tool_use blocks")
         elif m.get("type") == "function_call_output" and m.get("call_id"):
             if m.get("call_id") in function_call_ids:
                 validated_output.append(m)
             else:
-                print(
-                    f"Removing orphaned function_call_output with call_id: {m.get('call_id')}"
-                )
+                pass
+                # print(
+                #     f"Removing orphaned function_call_output with call_id: {m.get('call_id')}"
+                # )
         else:
             validated_output.append(m)
 

@@ -1,5 +1,6 @@
 from models_anthropic_ import model_call
 from tools.kernel_tool_ import kernel
+from tools.sec_tools_ import sec_fetch_metrics
 from tools.planning_ import make_plan, show_full_plan
 from typing import Any, Dict
 import asyncio
@@ -100,50 +101,3 @@ def function_to_schema(func: callable) -> Dict[str, Any]:
             "required": required_params,
         },
     }
-
-
-async def main():
-
-    functions = [
-        # kernel,
-        make_plan
-    ]
-
-    for func in functions:
-        schema = function_to_schema(func)
-        print(f"\nSchema for {func.__name__}:")
-        print(json.dumps(schema, indent=2))
-
-        try:
-            response = await model_call(
-                input=[
-                    {"role": "system", "content": "You are a helpful assistant."},
-                    {
-                        "role": "user",
-                        "content": "use the tool write a cussing plan to do web research on stocks",
-                    },
-                ],
-                tools=[schema],
-                model="claude-3.5",
-            )
-            print("\nAPI Response:")
-            print(json.dumps(response.model_dump(), indent=2))
-            print("\nSchema validation successful!")
-
-            # Extract tool use block and test make_plan
-            tool_use_block = next(
-                (block for block in response.content if block.type == "tool_use"), None
-            )
-            if tool_use_block:
-                try:
-                    make_plan(**tool_use_block.input, user_id="test_user")
-                except Exception as e:
-                    print(f"\nMake plan error: {e}")
-                full_plan = show_full_plan(user_id="test_user")
-                print(full_plan)
-        except Exception as e:
-            print(f"\nSchema validation error: {e}")
-
-
-if __name__ == "__main__":
-    asyncio.run(main())

@@ -977,18 +977,3 @@ def calculate_all_ratios(data, stock_price=None, peer_multiples=None, *, user_id
             results["missing_metrics"].append("implied_valuation: calculation error")
 
     return results
-
-
-def test():
-    user_id = "test"
-    with open("sec_raw_data.json") as json_data:
-        data = json.load(json_data)
-
-    quant_analysis = calculate_all_ratios(
-        data, stock_price=237.0050048828125, user_id=user_id
-    )
-    print(json.dumps(quant_analysis, indent=2))
-
-
-if __name__ == "__main__":
-    test()

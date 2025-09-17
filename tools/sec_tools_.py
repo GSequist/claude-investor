@@ -265,7 +265,7 @@ def sec_fetch_metrics_structured(
 
 def sec_fetch_metrics(
     company_name: str,
-    metrics: list = "all",
+    metrics: str = "all",
     target_year: int = None,
     target_form: str = None,
     *,
@@ -274,7 +274,7 @@ def sec_fetch_metrics(
     """Fetch financial metrics from SEC XBRL data - fetches all available metrics by default
     #parameters:
     company_name: exact company name as it appears in SEC filings or ticker symbol or a ticker, example: Apple Inc. or AAPL
-    metrics: list of exact XBRL concept names or "all" to fetch all available metrics (default: "all")
+    metrics: comma-separated string of exact XBRL concept names (e.g., "Revenues,Assets,Liabilities") or "all" to fetch all available metrics (default: "all")
     target_year: specific fiscal year to filter (e.g., 2023), if None gets most recent
     target_form: specific form type to filter (e.g., "10-K", "10-Q"), if None gets any form
     """
@@ -520,29 +520,3 @@ def sec_fetch(
 
 
 ########################################################################
-
-
-def main():
-    user_id = "localUser"
-    company_name = "Apple Inc."
-    keywords = "insider"
-    filing_type = "10-K"
-
-    # sec_report = sec_fetch(company_name, keywords, filing_type, user_id=user_id)
-    # print(sec_report)
-
-    sec_metrics = sec_fetch_metrics_structured(
-        "MSFT",
-        # [
-        #     "RevenueFromContractWithCustomerExcludingAssessedTax",
-        #     "OtherComprehensiveIncomeUnrealizedGainLossOnDerivativesArisingDuringPeriodTax",
-        # ],
-        "all",
-        target_year=None,
-        target_form=None,
-        user_id="user1",
-    )
-
-
-if __name__ == "__main__":
-    main()

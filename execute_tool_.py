@@ -121,7 +121,7 @@ async def _execute_tool_call(
                 "max_tokens": max_tokens,
             }
         elif name == "sec_fetch_metrics":
-            text, _, sources, max_tokens = sec_fetch(**args, user_id=user_id)
+            text, _, sources, max_tokens = sec_fetch_metrics(**args, user_id=user_id)
             yield {
                 "type": "tool_result",
                 "content": text,

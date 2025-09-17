@@ -126,6 +126,10 @@ def _render_detailed_analysis(ticker_data: dict):
                 _wrap_text(analysis.get("reasoning", "No reasoning provided")),
             ],
             [
+                "NUMBERS",
+                _wrap_text(analysis.get("numbers", "No numbers provided")),
+            ],
+            [
                 "KEY CATALYSTS",
                 _wrap_text(analysis.get("key_catalysts", "No catalysts identified")),
             ],
@@ -227,46 +231,3 @@ def _wrap_text(text: str, width: int = 70) -> str:
         return "No information available"
 
     return textwrap.fill(text, width=width, subsequent_indent="  ")
-
-
-def test():
-    data = {
-        "AAPL": {
-            "action": "buy",
-            "reasoning": "Strong fundamentals with iPhone 16 cycle driving revenue growth. Trading at discount to historical P/E multiple with robust services growth.",
-            "conviction_level": "high",
-            "price_target": "$230.00",
-            "key_catalysts": "iPhone 16 launch, AI integration, services revenue expansion",
-            "primary_risks": "China trade tensions, regulatory pressure on App Store",
-            "sector_outlook": "Technology sector showing resilience despite macro headwinds",
-            "valuation_assessment": "undervalued",
-            "momentum_indicators": "positive",
-            "institutional_sentiment": "bullish",
-        },
-        "TSLA": {
-            "action": "sell",
-            "reasoning": "Overvalued at current levels with slowing EV growth and increasing competition from traditional automakers",
-            "conviction_level": "medium",
-            "price_target": "$180.00",
-            "key_catalysts": "Cybertruck production ramp, FSD progress",
-            "primary_risks": "High valuation, competition, regulatory scrutiny",
-            "sector_outlook": "EV market experiencing growth slowdown and margin compression",
-            "valuation_assessment": "overvalued",
-            "momentum_indicators": "negative",
-            "institutional_sentiment": "bearish",
-        },
-        "thinking_notes": """Looking at both Apple and Tesla, I need to consider the broader market dynamics and valuation frameworks that drive my investment thesis.
-
-For Apple, the key insight is that despite trading at what appears to be a premium valuation, the company's moat in the premium consumer electronics space remains unassailable. The services revenue growth trajectory - now representing over 20% of total revenue - provides predictable recurring income that traditional hardware-focused valuations miss.
-
-The iPhone replacement cycle dynamics are fascinating. While unit growth has plateaued in mature markets, the average selling price continues to climb due to AI integration and premium features. This mirrors the luxury goods playbook - fewer units at higher margins.
-
-Tesla presents a completely different investment case. The company benefited enormously from first-mover advantage in premium EVs, but that advantage is rapidly eroding. Traditional automakers have caught up on build quality while Chinese manufacturers are competing aggressively on price.
-
-Most concerning for Tesla is the valuation disconnect. The stock still trades on growth multiples despite decelerating fundamentals. Musk's diversification into AI and robotics, while potentially valuable long-term, doesn't justify current automotive valuations when core auto margins are compressing.""",
-    }
-    visualize_result(data)
-
-
-if __name__ == "__main__":
-    test()

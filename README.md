@@ -66,6 +66,13 @@ Claude with access to internet, SEC reports and metrics. Experimental applicatio
 - **Multiple Analysis Styles** - Quick, standard, or deep analysis modes
 - **Interactive Charts** - Terminal-based visualizations for financial data
 
+##Work-in-progres
+
+This application will be further developed. Contributions are welcome.
+
+- **Portfolio** - Persistence, memory and tracking portfolio performance over time
+- **Number crunching** - Further enhance financial calculations based on fetched SEC metrics
+
 ## Installation
 
 ### 1. Clone the Repository

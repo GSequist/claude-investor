@@ -90,7 +90,7 @@ def check_and_setup_env():
     return True
 
 
-async def main(query, no_turns, thinking, graph, style):
+async def main(query, no_turns, thinking, graph):
     user_id = "local_user"
     stream_id = "stream"
 
@@ -107,7 +107,7 @@ async def main(query, no_turns, thinking, graph, style):
     header = Panel.fit(
         f"[bold green]Pocket Gekko Analyst[/bold green]\n"
         f"[white]Query:[/white] {query}\n"
-        f"[white]Style:[/white] {', '.join(s.replace('_', ' ').title() for s in style)}",
+        f"[white]Analysis Depth:[/white] {no_turns} turns",
         border_style="green",
     )
 
@@ -118,7 +118,6 @@ async def main(query, no_turns, thinking, graph, style):
 
         async for update in gekko_looper_(
             query=query,
-            style=style,
             no_turns=no_turns or 30,
             thinking=thinking,
             graph=graph,
@@ -151,7 +150,9 @@ async def main(query, no_turns, thinking, graph, style):
                         f"[italic white]{result_content.get('sources', 'No sources available')}[/italic white]",
                         border_style="blue",
                     )
-                    console.print(f"\n{sources_panel}")
+                    console.print("\n")
+                    console.print(sources_panel)
+
                 tokens = calculate_costs()
                 console.print(tokens)
                 break
@@ -199,85 +200,67 @@ if __name__ == "__main__":
     thinking = args.thinking
     graph = args.graph
 
-    # Get query if not provided via args
-    if not query:
-        query = questionary.text(
-            "What investment opportunity shall we hunt?",
-            validate=lambda x: len(x.strip()) > 0 or "Query cannot be empty",
-        ).ask()
-
-    # Get number of turns if not provided via args
-    if not no_turns:
-        no_turns = questionary.select(
-            "How deep should the analysis be?",
-            choices=[
-                questionary.Choice("Quick Analysis (5 turns)", value=5),
-                questionary.Choice("Standard Analysis (15 turns)", value=15),
-                questionary.Choice("Deep Analysis (30 turns)", value=30),
-                questionary.Choice("Custom", value="custom"),
-            ],
-            default="📊 Standard Analysis (15 turns)",
-        ).ask()
-
-        if no_turns == "custom":
-            no_turns = questionary.int(
-                "Enter number of analysis turns (30-100):",
-                validate=lambda x: 30 <= x <= 100 or "Minimum recommended 30",
+    try:
+        # Get query if not provided via args
+        if not query:
+            query = questionary.text(
+                "What do you want me to research?",
+                validate=lambda x: len(x.strip()) > 0 or "Query cannot be empty",
             ).ask()
 
-    # Get thinking preference if not provided via args
-    if not thinking:  # This handles both None and False from store_true
-        thinking = questionary.confirm(
-            "Do you want to see Gordon Gekko's detailed thinking process?",
-            default=False,
-        ).ask()
+        # Get number of turns if not provided via args
+        if not no_turns:
+            no_turns = questionary.select(
+                "How deep should the analysis be?",
+                instruction="\n[Space] to select • [Enter] to confirm",
+                choices=[
+                    questionary.Choice("Quick Analysis (20 turns)", value=20),
+                    questionary.Choice("Standard Analysis (30 turns)", value=30),
+                    questionary.Choice("Deep Analysis (50 turns)", value=50),
+                    questionary.Choice("Custom", value="custom"),
+                ],
+                style=questionary.Style(
+                    [
+                        ("checkbox-selected", "fg:green bold"),
+                        ("selected", "fg:green"),
+                        ("highlighted", "fg:yellow bold"),
+                        ("pointer", "fg:green bold"),
+                        ("instruction", "fg:cyan"),
+                    ]
+                ),
+            ).ask()
 
-    if not graph:  # This handles both None and False from store_true
-        graph = questionary.confirm(
-            "Do you want also a chart?",
-            default=False,
-        ).ask()
+            if no_turns == "custom":
+                custom_turns = questionary.text(
+                    "Enter number of analysis turns (20-100):",
+                    validate=lambda x: x.isdigit()
+                    and 20 <= int(x) <= 100
+                    or "Please enter a number between 20 and 100",
+                ).ask()
+                no_turns = int(custom_turns)
 
-    STYLES = {
-        "deep_analysis": {
-            "logic": "Perform deep analysis starting with broader news affecting industry/sector then company news and finally deep down on SEC reports and financial news and indicators."
-        },
-        "medium_analysis": {
-            "logic": "You have limited time, so focus on company/industry news and proceed with getting data from SEC and performing calculations."
-        },
-        "light_analysis": {
-            "logic": "You have very short time. The client wants an answer in an hour. Just pull the company metrics and basic data from SEC reports and perform calculations."
-        },
-    }
+        console.print(f"\n[green]Selected:[/green] {no_turns} analysis turns\n")
 
-    choices = questionary.checkbox(
-        "Choose the analysis style.",
-        choices=[
-            questionary.Choice(f"🎯 {key.replace('_', ' ').title()}", value=key)
-            for key in STYLES
-        ],
-        instruction="\n[Space] to select • [a] to select all • [Enter] to confirm",
-        validate=lambda x: len(x) > 0 or "You must select at least one style.",
-        style=questionary.Style(
-            [
-                ("checkbox-selected", "fg:green bold"),
-                ("selected", "fg:green"),
-                ("highlighted", "fg:yellow bold"),
-                ("pointer", "fg:green bold"),
-                ("instruction", "fg:cyan"),
-            ]
-        ),
-    ).ask()
+        # Get thinking preference if not provided via args
+        if not thinking:  # This handles both None and False from store_true
+            thinking = questionary.confirm(
+                "Do you want to see Gordon Gekko's detailed thinking process?",
+                default=False,
+            ).ask()
 
-    selected_style = choices
-    console.print(
-        f"\n[green]Selected:[/green] {', '.join(choice.replace('_', ' ').title() for choice in choices)}\n"
-    )
+        if not graph:  # This handles both None and False from store_true
+            graph = questionary.confirm(
+                "Do you want also a chart?",
+                default=False,
+            ).ask()
+
+    except KeyboardInterrupt:
+        console.print("\n[yellow]Setup cancelled by user. Exiting...[/yellow]")
+        exit(0)
 
     keyboard_thread = threading.Thread(target=keyboard_listener, daemon=True)
     keyboard_thread.start()
     try:
-        style_logic = [STYLES[style]["logic"] for style in selected_style]
-        asyncio.run(main(query, no_turns, thinking, graph, style_logic))
+        asyncio.run(main(query, no_turns, thinking, graph))
     except KeyboardInterrupt:
         print("\n🛑 Stopped by user")

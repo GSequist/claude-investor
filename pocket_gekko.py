@@ -1,7 +1,6 @@
 from execute_tool_ import _get_tool_schemas, _execute_tool_call
 from utils.ratios_precalc_ import precalculate_ratios
 from utils.graph_charting_ import graph_charter
-from sandbox.kernel import cleanup_user_kernels
 from utils.token_cutter_ import token_cutter
 from models.investors_ import GORDOK_GEKKO
 from models_anthropic_ import model_call
@@ -17,7 +16,6 @@ from typing import Dict, List
 from dotenv import load_dotenv
 import datetime
 import asyncio
-import json
 
 
 load_dotenv()
@@ -25,7 +23,6 @@ load_dotenv()
 
 async def gekko_looper_(
     query,
-    style,
     no_turns: int = 30,
     thinking: bool = False,
     graph: bool = False,
@@ -56,8 +53,6 @@ Your task is to perform deep investment analysis for client.
 Use your deep knowledge of investment banking and think systematically.
 
 Current datetime: {datetime.datetime.now().strftime("%B %d, %Y")}
-
-{style}
 
 In order to succeed, you will follow these phases:
 
@@ -183,7 +178,7 @@ Finish with <RESEARCH_COMPLETE>
         ##add step
         steps += 1
 
-        printer(msgs, max_tokens)
+        # printer(msgs, max_tokens) ### for testing
 
         try:
             response = await model_call(
@@ -291,7 +286,7 @@ Finish with <RESEARCH_COMPLETE>
             content = m.get("content", "")
             if isinstance(content, str):
                 complete_notes.append(content)
-            # elif isinstance(content, list): ### thinking not useful
+            # elif isinstance(content, list): ### intermediate thinking not useful
             #     for block in content:
             #         if hasattr(block, "thinking"):
             #             complete_notes.append(block.thinking)
@@ -335,16 +330,9 @@ Think your analysis through. Take the time. Write succintly but cover everything
 
 For each stock, write your:
 
-action - recommended action buy, sell, hold
-quantity 
-reasoning - explain exactly why
-catalysts - specific events that will unlock value,
-risk_factors - what could destroy the thesis,
-activist_potential - corporate control/influence strategies,
-hidden_oppts - non-obvious value creation opportunities
-
 action = buy|sell|hold|short,
 reasoning: explain your reasoning comprehensively,
+numbers - back up and explain your reasoning with deep analysis of financial ratios,
 conviction_level - high|medium|low,
 price_target - $150.00,
 key_catalysts - Q1 earnings, product launch,
@@ -360,6 +348,7 @@ Return your final analysis as JSON with this structure:
 "ticker": {{
         "action": "...",
         "reasoning": "...",
+        "numbers": "...",
         "conviction_level": "...",
         "price_target": "...",
         "key_catalysts": "...",
@@ -432,6 +421,7 @@ Return your final analysis as JSON with this structure:
             "percentage": 99,
             "stream_id": stream_id,
         }
+
     graph_json_data = {}
     if graph:
         graph_json_data = await graph_charter(
@@ -447,9 +437,6 @@ Return your final analysis as JSON with this structure:
         "graph": graph_json_data if graph else {},
         "sources": all_sources,
     }
-
-    ###kill kernel
-    cleanup_user_kernels(user_id)
 
     yield {
         "type": "tool_progress",
@@ -468,36 +455,3 @@ Return your final analysis as JSON with this structure:
         "tokens": 0,
         "stream_id": stream_id,
     }
-
-
-async def test():
-    user_id = "localUser"
-    stream_id = "test_"
-    query = "should i invest in microsoft given the ai situation right now"
-    style = (
-        "Perform deep analysis starting with broader news affecting industry/sector then company news and finally deep down on SEC reports and financial news and indicators.",
-    )
-    no_turns = 10
-
-    generator = gekko_looper_(
-        query,
-        style,
-        no_turns,
-        thinking=True,
-        graph=True,
-        user_id=user_id,
-        stream_id=stream_id,
-    )
-
-    async for update in generator:
-        if isinstance(update, dict):
-            if update["type"] == "tool_progress":
-                # print(f"Progress: {update['progress']} ({update['percentage']}%)")
-                pass
-            elif update["type"] == "tool_result":
-                print("\n=== FINAL RESULT ===")
-                print(update["content"])
-
-
-if __name__ == "__main__":
-    asyncio.run(test())

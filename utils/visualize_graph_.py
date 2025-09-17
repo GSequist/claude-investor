@@ -198,38 +198,3 @@ def _set_chart_labels(title: str, subtitle: str, x_label: str, y_label: str):
         plt.xlabel(x_label)
     if y_label:
         plt.ylabel(y_label)
-
-
-def test():
-    """Test the graph visualization"""
-    test_data = {
-        "graph": {
-            "type": "multi_line",
-            "title": "Stock Performance Comparison",
-            # "subtitle": "Price targets vs Current prices", ###RM not nice
-            "x_label": "Stocks",
-            "y_label": "Price ($)",
-            "data": {
-                "x": ["AAPL", "MSFT", "GOOGL"],
-                "series": [
-                    {
-                        "name": "Current Price",
-                        "values": [150, 280, 2500],
-                        "color": "blue",
-                    },
-                    {
-                        "name": "Target Price",
-                        "values": [180, 320, 2800],
-                        "color": "green",
-                    },
-                ],
-            },
-            "insights": "Apple and Microsoft show strong upside potential, while Google has modest growth expectations.",
-        }
-    }
-
-    visualize_graph(test_data)
-
-
-if __name__ == "__main__":
-    test()
