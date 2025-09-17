@@ -2,6 +2,7 @@
 
 Claude with access to internet, SEC reports and metrics. Experimental application. Performs deep research for company/industry/sector news on the internet, pulls reports from SEC and calculates a set of financial ratios before generating a final comprehensive analysis, including charts. The application systematically progresses through planning, web research, regulatory filing analysis, and quantitative phases to deliver structured investment recommendations. The application is launched and controlled via CLI.
 
+```ascii
 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
 ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
@@ -54,6 +55,8 @@ Claude with access to internet, SEC reports and metrics. Experimental applicatio
 ░░▒▒▒░░░░░░░▒▒▒▒▒▒▒▒▒▓▒▓▓░▒▒▒▒▒▒▒▒▒▒▒▒▓███████▓██████▓▓▒▒▒▒▒▒▒▒▒▒▓▓▓▓██████████▒▒▒▒▒▓▓▓▒▒▒░░░▒▒▓
 ░░░░▒░░░░░░░▒▒▓▒▒▒▒▓▒▓▒▓▓▒▒▒▒░▒▒▒▒▒▒▒▒▓███████▓██████▓▓▓▒▒▒▒▒▒▒▒▓▓▓▓███████████▓▒▒▒▒▓▓▓▒▒▒▒▒▒▒▒▓
 ░░░░▒░░░░░░░▒▒▓▒▒▒▒▒▒▓▓▓█▒▒▒░░▒▒▒▒▒▒▒▒▓▓█████████████▓▓▒▒▒▒▒▒▒▒▒▓▓▓▓███████████▓▒▒▒▓▓▓▓▒▒▒▒▒▒▒▒▒
+```
+
 
 ## Features
 
