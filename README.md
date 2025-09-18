@@ -1,4 +1,4 @@
-# Pocket Gordon Gekko 💼
+# Pocket Gordon Gekko 
 
 Claude with access to internet, SEC reports and metrics. Experimental application. Performs deep research for company/industry/sector news on the internet, pulls reports from SEC and calculates a set of financial ratios before generating a final comprehensive analysis, including charts. The application systematically progresses through planning, web research, regulatory filing analysis, and quantitative phases to deliver structured investment recommendations. The application is launched and controlled via CLI.
 
@@ -164,8 +164,7 @@ pocket-gordon-gekko/
 │   ├── visual_result_.py      # Results display
 │   └── ...
 ├── tools/                 # Analysis tools
-├── models/               # AI model configurations
-└── sandbox/              # Jupyter kernel management
+└── models/              # AI model configurations
 ```
 
 ## Contributing
@@ -178,7 +177,7 @@ pocket-gordon-gekko/
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+This project is licensed under the MIT License.
 
 ## Disclaimer
 
