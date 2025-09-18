@@ -164,7 +164,7 @@ pocket-gordon-gekko/
 │   ├── visual_result_.py      # Results display
 │   └── ...
 ├── tools/                 # Analysis tools
-└── models/              # AI model configurations
+└── models/              # model definitions
 ```
 
 ## Contributing
