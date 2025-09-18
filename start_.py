@@ -1,7 +1,6 @@
 from utils.visualize_result_ import visualize_result
 from utils.visualize_graph_ import visualize_graph
 from utils.token_counter_ import calculate_costs
-from utils.utils import keyboard_listener
 from colorama import Fore, Style, init
 from rich.console import Console
 from rich.progress import (
@@ -12,17 +11,25 @@ from rich.progress import (
     TimeElapsedColumn,
 )
 from pocket_gekko import gekko_looper_
-from rich.panel import Panel
-from rich.live import Live
-import questionary
-import argparse
-import threading
 from dotenv import load_dotenv, set_key
+from rich.layout import Layout
+from rich.panel import Panel
+from rich.text import Text
+import questionary
+import os
+import sys
+import termios
+import tty
+import select
+import threading
 import asyncio
+import time
 import os
 
 
 load_dotenv()
+
+###########################################################################
 
 
 def check_and_setup_env():
@@ -90,9 +97,208 @@ def check_and_setup_env():
     return True
 
 
-async def main(query, no_turns, thinking, graph):
-    user_id = "local_user"
-    stream_id = "stream"
+###########################################################################
+
+
+def display_header(settings):
+    """Display rich formatted header and settings"""
+    console = Console()
+    width = console.width
+
+    console.print()  ##gap
+
+    combined_text = Text()
+    combined_text.append("◉ Pocket Gekko Analyst", style="bold white")
+    combined_text.append("\n")
+    combined_text.append("\n")
+    combined_text.append(
+        f"Settings: turns={settings['no_turns']}, thinking={'on' if settings['thinking'] else 'off'}, graph={'on' if settings['graph'] else 'off'}",
+        style="dim",
+    )
+
+    # Put in single panel that fits content
+    combined_panel = Panel.fit(combined_text, border_style="white")
+    console.print(combined_panel)
+
+    console.print()  ##gap
+
+    ### input
+
+    # input_prompt_panel = Panel(
+    #     "[cyan]Type your query and press Enter | ESC to quit | / for commands[/cyan]",
+    #     width=console.size.width,
+    #     border_style="cyan",
+    # )
+    # console.print(input_prompt_panel)
+
+    console.print(
+        "[dim]Type your query and press Enter | ESC to quit | / for commands[/dim]"
+    )
+
+    console.print("─" * width, style="dim")
+
+
+###########################################################################
+
+
+def keyboard_listener(settings, input_buffer, input_ready):
+    """Enhanced keyboard listener that handles all input and commands"""
+    old_settings = termios.tcgetattr(sys.stdin)
+    tty.setraw(sys.stdin.fileno())
+
+    try:
+        while True:
+            # Check if we should stop the listener
+            if settings.get("_stop_listener", False):
+                termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+                return  # Exit keyboard listener cleanly
+
+            if select.select([sys.stdin], [], [], 0.1)[0]:
+                char = sys.stdin.read(1)
+
+                # ESC key - immediate exit
+                if char == "\x1b":
+                    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+                    print("\nESC pressed - exiting")
+                    os._exit(0)
+
+                # Enter key - submit input
+                elif char == "\r" or char == "\n":
+                    if input_buffer["text"].strip():
+                        input_ready["ready"] = True
+                        print()  # New line after input
+
+                # Backspace
+                elif char == "\x7f":
+                    if input_buffer["text"]:
+                        input_buffer["text"] = input_buffer["text"][:-1]
+                        print(
+                            "\r" + " " * 80 + "\r> " + input_buffer["text"],
+                            end="",
+                            flush=True,
+                        )
+
+                # Forward slash for commands
+                elif char == "/":
+                    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+
+                    # Clear screen to remove questionnaire clutter
+                    os.system("clear" if os.name == "posix" else "cls")
+
+                    # Redisplay current status with Rich formatting
+                    display_header(settings)
+                    print("\n📋 Choose an option:")
+                    choice = questionary.select(
+                        "What would you like to do?",
+                        choices=[
+                            "Change number of turns",
+                            "Toggle thinking mode",
+                            "Toggle graph mode",
+                            "Show current settings",
+                            "Back to input",
+                        ],
+                    ).ask()
+
+                    if choice == "Change number of turns":
+                        new_turns = no_turns_questionnaire()
+                        settings["no_turns"] = new_turns
+                        print(f"✅ Turns updated to: {new_turns}")
+                    elif choice == "Toggle thinking mode":
+                        new_thinking = thinking_questionnaire()
+                        settings["thinking"] = new_thinking
+                        print(f"✅ Thinking mode: {'on' if new_thinking else 'off'}")
+                    elif choice == "Toggle graph mode":
+                        new_graph = graph_questionnaire()
+                        settings["graph"] = new_graph
+                        print(f"✅ Graph mode: {'on' if new_graph else 'off'}")
+                    elif choice == "Show current settings":
+                        print(
+                            f"Current settings: turns={settings['no_turns']}, thinking={settings['thinking']}, graph={settings['graph']}"
+                        )
+                    elif choice == "Back to input":
+                        pass  # Just continue to return to input
+
+                    # Clear screen again for clean return to input
+                    os.system("clear" if os.name == "posix" else "cls")
+
+                    # Redisplay current status with updated settings using Rich
+                    display_header(settings)
+
+                    # Return to input mode cleanly
+                    if input_buffer["text"]:
+                        print(f"> {input_buffer['text']}", end="", flush=True)
+                    else:
+                        print("> ", end="", flush=True)
+
+                    tty.setraw(sys.stdin.fileno())
+
+                # Regular characters
+                elif ord(char) >= 32 and ord(char) < 127:
+                    input_buffer["text"] += char
+                    print(char, end="", flush=True)
+
+    except Exception as e:
+        termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
+        print(f"\n⚠️ Keyboard error: {e}")
+        os._exit(0)
+
+
+###########################################################################
+
+
+def no_turns_questionnaire():
+    no_turns = questionary.select(
+        "How deep should the analysis be?",
+        instruction="\n[Space] to select • [Enter] to confirm",
+        choices=[
+            questionary.Choice("Quick Analysis (20 turns)", value=20),
+            questionary.Choice("Standard Analysis (30 turns)", value=30),
+            questionary.Choice("Deep Analysis (50 turns)", value=50),
+            questionary.Choice("Custom", value="custom"),
+        ],
+        style=questionary.Style(
+            [
+                ("checkbox-selected", "fg:green bold"),
+                ("selected", "fg:green"),
+                ("highlighted", "fg:yellow bold"),
+                ("pointer", "fg:green bold"),
+                ("instruction", "fg:cyan"),
+            ]
+        ),
+    ).ask()
+    if no_turns == "custom":
+        custom_turns = questionary.text(
+            "Enter number of analysis turns (20-100):",
+            validate=lambda x: x.isdigit()
+            and 20 <= int(x) <= 100
+            or "Please enter a number between 20 and 100",
+        ).ask()
+        no_turns = int(custom_turns)
+
+    console.print(f"\n[green]Selected:[/green] {no_turns} analysis turns\n")
+    return no_turns
+
+
+def thinking_questionnaire():
+    thinking = questionary.confirm(
+        "Do you want to see Gordon Gekko's detailed thinking process?",
+        default=False,
+    ).ask()
+    return thinking
+
+
+def graph_questionnaire():
+    graph = questionary.confirm(
+        "Do you want also a chart?",
+        default=False,
+    ).ask()
+    return graph
+
+
+###########################################################################
+
+
+async def main(query, no_turns, thinking, graph, user_id, stream_id):
 
     progress = Progress(
         SpinnerColumn(),
@@ -104,20 +310,74 @@ async def main(query, no_turns, thinking, graph):
         refresh_per_second=4,
     )
 
-    header = Panel.fit(
-        f"[bold green]Pocket Gekko Analyst[/bold green]\n"
-        f"[white]Query:[/white] {query}\n"
-        f"[white]Analysis Depth:[/white] {no_turns} turns",
-        border_style="green",
-    )
+    settings = {"no_turns": no_turns, "thinking": thinking, "graph": graph}
+    display_header(settings)
+    input_buffer = {"text": ""}
+    input_ready = {"ready": False}
 
-    console.print(header)
+    # Start keyboard listener immediately - it handles all input
+    keyboard_thread = threading.Thread(
+        target=keyboard_listener,
+        args=(settings, input_buffer, input_ready),
+        daemon=True,
+    )
+    keyboard_thread.start()
+
+    # Show prompt and wait for input through keyboard listener
+    print("> ", end="", flush=True)
+
+    # Wait for user to press Enter
+    while not input_ready["ready"]:
+        time.sleep(0.1)
+
+    user_query = input_buffer["text"]
+    if not user_query.strip():
+        console.print("[yellow]No query entered. Exiting...[/yellow]")
+        return
+
+    ############TEST
+    # time.sleep(1)
+
+    # data = {
+    #     "AAPL": {
+    #         "action": "buy",
+    #         "reasoning": "Strong fundamentals with iPhone 16 cycle driving revenue growth. Trading at discount to historical P/E multiple with robust services growth.",
+    #         "conviction_level": "high",
+    #         "price_target": "$230.00",
+    #         "key_catalysts": "iPhone 16 launch, AI integration, services revenue expansion",
+    #         "primary_risks": "China trade tensions, regulatory pressure on App Store",
+    #         "sector_outlook": "Technology sector showing resilience despite macro headwinds",
+    #         "valuation_assessment": "undervalued",
+    #         "momentum_indicators": "positive",
+    #         "institutional_sentiment": "bullish",
+    #     },
+    #     "TSLA": {
+    #         "action": "sell",
+    #         "reasoning": "Overvalued at current levels with slowing EV growth and increasing competition from traditional automakers",
+    #         "conviction_level": "medium",
+    #         "price_target": "$180.00",
+    #         "key_catalysts": "Cybertruck production ramp, FSD progress",
+    #         "primary_risks": "High valuation, competition, regulatory scrutiny",
+    #         "sector_outlook": "EV market experiencing growth slowdown and margin compression",
+    #         "valuation_assessment": "overvalued",
+    #         "momentum_indicators": "negative",
+    #         "institutional_sentiment": "bearish",
+    #     },
+    # }
+
+    # # STOP keyboard listener and exit raw mode BEFORE visualization
+    # settings["_stop_listener"] = True
+    # time.sleep(0.2)  # Give keyboard thread time to exit raw mode
+
+    # visualize_result(data)
+    # return
+    #############
 
     with progress:
         task_id = progress.add_task("Initializing Gordon Gekko...", total=100)
 
         async for update in gekko_looper_(
-            query=query,
+            query=user_query,  # Use actual user query
             no_turns=no_turns or 30,
             thinking=thinking,
             graph=graph,
@@ -135,6 +395,11 @@ async def main(query, no_turns, thinking, graph):
                 progress.update(
                     task_id, completed=100, description="Analysis Complete!"
                 )
+
+                # STOP keyboard listener and exit raw mode BEFORE visualization
+                settings["_stop_listener"] = True
+                time.sleep(0.2)  # Give keyboard thread time to exit raw mode
+
                 console.print("\n[green]Analysis complete![/green]")
                 result_content = update.get("content", {})
                 if (
@@ -158,109 +423,25 @@ async def main(query, no_turns, thinking, graph):
                 break
 
 
+###########################################################################
+
 if __name__ == "__main__":
 
     console = Console()
 
-    console.print(
-        Panel.fit(
-            "[bold green]Pocket Gekko Analyst[/bold green]\n"
-            "[italic]Greed is good. Choose your style.[/italic]\n"
-            "[bold red]Press q + Enter at any time to exit[/bold red]",
-            border_style="green",
-        )
-    )
-
-    # Check and setup environment variables
     if not check_and_setup_env():
         console.print("[red]❌ Environment setup failed. Exiting...[/red]")
         exit(1)
 
-    parser = argparse.ArgumentParser(
-        description="--init Gordon",
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-
-    parser.add_argument(
-        "--query",
-        type=str,
-        help="Investment analysis query (company names, sectors, themes, other like your investment situation)",
-    )
-    parser.add_argument("--no_turns", type=int, help="How many turns")
-    parser.add_argument(
-        "--thinking", action="store_true", help="Show Gekko's thinking process"
-    )
-    parser.add_argument(
-        "--graph", action="store_true", help="Should Gekko create a chart?"
-    )
-    args = parser.parse_args()
-
-    query = args.query
-    no_turns = args.no_turns
-    thinking = args.thinking
-    graph = args.graph
+    ### def placeholders
+    user_id = "local_user"
+    stream_id = "stream"
+    query = ""
+    no_turns = 30
+    thinking = False
+    graph = False
 
     try:
-        # Get query if not provided via args
-        if not query:
-            query = questionary.text(
-                "What do you want me to research?",
-                validate=lambda x: len(x.strip()) > 0 or "Query cannot be empty",
-            ).ask()
-
-        # Get number of turns if not provided via args
-        if not no_turns:
-            no_turns = questionary.select(
-                "How deep should the analysis be?",
-                instruction="\n[Space] to select • [Enter] to confirm",
-                choices=[
-                    questionary.Choice("Quick Analysis (20 turns)", value=20),
-                    questionary.Choice("Standard Analysis (30 turns)", value=30),
-                    questionary.Choice("Deep Analysis (50 turns)", value=50),
-                    questionary.Choice("Custom", value="custom"),
-                ],
-                style=questionary.Style(
-                    [
-                        ("checkbox-selected", "fg:green bold"),
-                        ("selected", "fg:green"),
-                        ("highlighted", "fg:yellow bold"),
-                        ("pointer", "fg:green bold"),
-                        ("instruction", "fg:cyan"),
-                    ]
-                ),
-            ).ask()
-
-            if no_turns == "custom":
-                custom_turns = questionary.text(
-                    "Enter number of analysis turns (20-100):",
-                    validate=lambda x: x.isdigit()
-                    and 20 <= int(x) <= 100
-                    or "Please enter a number between 20 and 100",
-                ).ask()
-                no_turns = int(custom_turns)
-
-        console.print(f"\n[green]Selected:[/green] {no_turns} analysis turns\n")
-
-        # Get thinking preference if not provided via args
-        if not thinking:  # This handles both None and False from store_true
-            thinking = questionary.confirm(
-                "Do you want to see Gordon Gekko's detailed thinking process?",
-                default=False,
-            ).ask()
-
-        if not graph:  # This handles both None and False from store_true
-            graph = questionary.confirm(
-                "Do you want also a chart?",
-                default=False,
-            ).ask()
-
-    except KeyboardInterrupt:
-        console.print("\n[yellow]Setup cancelled by user. Exiting...[/yellow]")
-        exit(0)
-
-    keyboard_thread = threading.Thread(target=keyboard_listener, daemon=True)
-    keyboard_thread.start()
-    try:
-        asyncio.run(main(query, no_turns, thinking, graph))
+        asyncio.run(main(query, no_turns, thinking, graph, user_id, stream_id))
     except KeyboardInterrupt:
         print("\n🛑 Stopped by user")

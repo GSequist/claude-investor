@@ -46,10 +46,3 @@ def extract_json_(text):
 
 
 ####################################################
-
-
-def keyboard_listener():
-    while True:
-        if input().lower() == "q":
-            print("\n⛓️‍💥 user shutting down Claude")
-            os._exit(0)
