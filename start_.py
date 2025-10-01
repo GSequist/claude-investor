@@ -122,15 +122,6 @@ def display_header(settings):
 
     console.print()  ##gap
 
-    ### input
-
-    # input_prompt_panel = Panel(
-    #     "[cyan]Type your query and press Enter | ESC to quit | / for commands[/cyan]",
-    #     width=console.size.width,
-    #     border_style="cyan",
-    # )
-    # console.print(input_prompt_panel)
-
     console.print(
         "[dim]Type your query and press Enter | ESC to quit | / for commands[/dim]"
     )
@@ -335,52 +326,15 @@ async def main(query, no_turns, thinking, graph, user_id, stream_id):
         console.print("[yellow]No query entered. Exiting...[/yellow]")
         return
 
-    ############TEST
-    # time.sleep(1)
-
-    # data = {
-    #     "AAPL": {
-    #         "action": "buy",
-    #         "reasoning": "Strong fundamentals with iPhone 16 cycle driving revenue growth. Trading at discount to historical P/E multiple with robust services growth.",
-    #         "conviction_level": "high",
-    #         "price_target": "$230.00",
-    #         "key_catalysts": "iPhone 16 launch, AI integration, services revenue expansion",
-    #         "primary_risks": "China trade tensions, regulatory pressure on App Store",
-    #         "sector_outlook": "Technology sector showing resilience despite macro headwinds",
-    #         "valuation_assessment": "undervalued",
-    #         "momentum_indicators": "positive",
-    #         "institutional_sentiment": "bullish",
-    #     },
-    #     "TSLA": {
-    #         "action": "sell",
-    #         "reasoning": "Overvalued at current levels with slowing EV growth and increasing competition from traditional automakers",
-    #         "conviction_level": "medium",
-    #         "price_target": "$180.00",
-    #         "key_catalysts": "Cybertruck production ramp, FSD progress",
-    #         "primary_risks": "High valuation, competition, regulatory scrutiny",
-    #         "sector_outlook": "EV market experiencing growth slowdown and margin compression",
-    #         "valuation_assessment": "overvalued",
-    #         "momentum_indicators": "negative",
-    #         "institutional_sentiment": "bearish",
-    #     },
-    # }
-
-    # # STOP keyboard listener and exit raw mode BEFORE visualization
-    # settings["_stop_listener"] = True
-    # time.sleep(0.2)  # Give keyboard thread time to exit raw mode
-
-    # visualize_result(data)
-    # return
-    #############
-
     with progress:
         task_id = progress.add_task("Initializing Gordon Gekko...", total=100)
 
         async for update in gekko_looper_(
             query=user_query,  # Use actual user query
-            no_turns=no_turns or 30,
-            thinking=thinking,
-            graph=graph,
+            no_turns=settings["no_turns"],
+            # no_turns=10,
+            thinking=settings["thinking"],
+            graph=settings["graph"],
             user_id=user_id,
             stream_id=stream_id,
         ):
@@ -398,7 +352,11 @@ async def main(query, no_turns, thinking, graph, user_id, stream_id):
 
                 # STOP keyboard listener and exit raw mode BEFORE visualization
                 settings["_stop_listener"] = True
-                time.sleep(0.2)  # Give keyboard thread time to exit raw mode
+                time.sleep(0.5)  # Give keyboard thread time to exit raw mode
+
+                # Ensure terminal is in normal mode for visualizations
+                old_settings = termios.tcgetattr(sys.stdin)
+                termios.tcsetattr(sys.stdin, termios.TCSADRAIN, old_settings)
 
                 console.print("\n[green]Analysis complete![/green]")
                 result_content = update.get("content", {})

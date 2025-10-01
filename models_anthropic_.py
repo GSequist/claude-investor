@@ -41,6 +41,8 @@ async def model_call(
     sleep_time = 2
     if model == "opus-4.1":
         model = "claude-opus-4-1-20250805"
+    elif model == "claude-4.5":
+        model = "claude-sonnet-4-5-20250929"
     elif model == "claude-3.7":
         model = "claude-3-7-sonnet-20250219"
     elif model == "claude-4":

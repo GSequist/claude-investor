@@ -111,6 +111,17 @@ When you are done finish with <RESEARCH_COMPLETE>
 
     while steps <= no_turns and stop_flag == False:
 
+        # Calculate progress: steps 0-no_turns map to 5-60%
+        progress_percentage = min(5 + int((steps / no_turns) * 55), 60)
+
+        yield {
+            "type": "tool_progress",
+            "toolName": "gekko_looper_",
+            "progress": f"Research phase {steps}/{no_turns}...",
+            "percentage": progress_percentage,
+            "stream_id": stream_id,
+        }
+
         plan = _get_plan(user_id)
         if plan:
             plan_reminder = get_contextual_plan_reminder(plan)
@@ -183,7 +194,7 @@ Finish with <RESEARCH_COMPLETE>
         try:
             response = await model_call(
                 input=msgs,
-                model="claude-4",
+                model="claude-4.5",
                 tools=tool_schemas,
                 thinking=True,
                 stream=False,
@@ -203,8 +214,8 @@ Finish with <RESEARCH_COMPLETE>
                 yield {
                     "type": "tool_progress",
                     "toolName": "gekko_looper_",
-                    "progress": f"Thinking... {thinking_block.thinking[:50]}...",
-                    "percentage": 20,
+                    "progress": f"Thinking...",
+                    "percentage": progress_percentage,
                     "stream_id": stream_id,
                 }
 
@@ -212,8 +223,8 @@ Finish with <RESEARCH_COMPLETE>
                 yield {
                     "type": "tool_progress",
                     "toolName": "gekko_looper_",
-                    "progress": f"Writing... {text_block.text[:20]}...",
-                    "percentage": 20,
+                    "progress": f"Writing notes...",
+                    "percentage": progress_percentage,
                     "stream_id": stream_id,
                 }
 
@@ -230,7 +241,7 @@ Finish with <RESEARCH_COMPLETE>
                     "type": "tool_progress",
                     "toolName": "gekko_looper_",
                     "progress": f"Using tool {tool_use_block.name}...",
-                    "percentage": 30,
+                    "percentage": progress_percentage,
                     "stream_id": stream_id,
                 }
 
@@ -373,7 +384,7 @@ Return your final analysis as JSON with this structure:
     try:
         response = await model_call(
             input=msgs,
-            model="claude-4",
+            model="claude-4.5",
             thinking=True,
             stream=False,
         )
@@ -401,7 +412,7 @@ Return your final analysis as JSON with this structure:
             yield {
                 "type": "tool_progress",
                 "toolName": "gekko_looper_",
-                "progress": f"Writing down... {text_block.text[:20]}...",
+                "progress": f"Writing analysis...",
                 "percentage": 90,
                 "stream_id": stream_id,
             }
@@ -427,7 +438,6 @@ Return your final analysis as JSON with this structure:
         graph_json_data = await graph_charter(
             query, financial_context, extracted_json_data
         )
-        print(f"printing graph data as returned{graph_json_data}")
         if not graph_json_data:
             graph_json_data = {}
 

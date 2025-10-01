@@ -4,6 +4,10 @@ from collections import defaultdict
 
 # Constants for pricing per million tokens
 PRICING = {
+    "claude-sonnet-4-5-20250929": {
+        "input": 3.0,
+        "output": 15.0,
+    },
     "claude-sonnet-4-20250514": {
         "input": 3.0,  # $3 per 1M input tokens
         "output": 15.0,  # $15 per 1M output tokens

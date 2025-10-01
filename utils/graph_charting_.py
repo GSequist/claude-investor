@@ -84,7 +84,10 @@ async def graph_charter(query, financial_context, extracted_json_data):
             graph_json = extract_json_(text_block.text)
             for json_obj in graph_json:
                 if isinstance(json_obj, dict):
-                    graph_json_data.update(json_obj)
+                    if "graph" in json_obj:
+                        return json_obj["graph"]
+                    else:
+                        graph_json_data.update(json_obj)
 
         return graph_json_data
     except Exception as e:
